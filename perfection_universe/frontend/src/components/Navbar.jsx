@@ -6,7 +6,7 @@ export default function Navbar() {
   const navigate = useNavigate()
   const location = useLocation()
 
-  const isActive = (path) => location.pathname === path
+  const isActive = (path) => location.pathname.startsWith(path)
 
   const linkStyle = (path) => ({
     color: isActive(path) ? 'rgba(200,160,255,1)' : 'rgba(200,160,255,0.5)',
@@ -32,13 +32,24 @@ export default function Navbar() {
       <div style={{ display: 'flex', gap: '28px', alignItems: 'center' }}>
         <Link to="/console" style={linkStyle('/console')}>CONSOLE</Link>
         <Link to="/rooms" style={linkStyle('/rooms')}>ROOMS</Link>
+        <Link to="/games" style={linkStyle('/games')}>GAMES</Link>
+
         {user ? (
-          <button
-            onClick={() => { logout(); navigate('/') }}
-            style={{ fontSize: '0.65rem', letterSpacing: '0.15em', padding: '6px 14px' }}
-          >
-            SIGN OUT
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <Link to="/profile" style={{
+              fontSize: '0.65rem', letterSpacing: '0.15em',
+              color: isActive('/profile') ? 'rgba(200,160,255,1)' : 'rgba(200,160,255,0.7)',
+              textDecoration: 'none', transition: 'color 0.2s ease',
+            }}>
+              WELCOME, {user.username.toUpperCase()}
+            </Link>
+            <button
+              onClick={() => { logout(); navigate('/') }}
+              style={{ fontSize: '0.65rem', letterSpacing: '0.15em', padding: '6px 14px' }}
+            >
+              SIGN OUT
+            </button>
+          </div>
         ) : (
           <Link to="/login" style={linkStyle('/login')}>SIGN IN</Link>
         )}

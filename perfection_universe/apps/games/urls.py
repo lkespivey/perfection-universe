@@ -1,6 +1,7 @@
 from django.urls import path
-from .views import ComingSoonView
+from .views import SubmitScoreView, LeaderboardView
 
 urlpatterns = [
-    path('', ComingSoonView.as_view()),
+    path('scores/submit/', SubmitScoreView.as_view(), name='submit-score'),
+    path('leaderboard/', LeaderboardView.as_view(), name='leaderboard'),
 ]

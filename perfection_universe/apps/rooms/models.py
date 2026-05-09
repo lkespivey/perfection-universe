@@ -9,6 +9,10 @@ class LiminalRoom(models.Model):
     is_active = models.BooleanField(default=True)
     unlock_requirement = models.CharField(max_length=200, blank=True,
         help_text='Leave blank for always available')
+    mars_level = models.PositiveIntegerField(default=0,
+        help_text='Set to 3 for the secret Mars Level 3 room. 0 = always visible.')
+    is_secret = models.BooleanField(default=False,
+        help_text='Secret rooms are hidden until unlocked via passphrase.')
     order = models.PositiveIntegerField(default=0)
 
     class Meta:

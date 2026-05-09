@@ -12,7 +12,10 @@ export function AuthProvider({ children }) {
     if (token) {
       client.get('/accounts/me/')
         .then(res => setUser(res.data))
-        .catch(() => localStorage.removeItem('access_token'))
+        .catch(() => {
+          localStorage.removeItem('access_token')
+          localStorage.removeItem('refresh_token')
+        })
         .finally(() => setLoading(false))
     } else {
       setLoading(false)
@@ -34,8 +37,8 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
-      {children}
+    <AuthContext.Provider value={{ user, setUser, login, logout, loading }}>
+      {!loading && children}
     </AuthContext.Provider>
   )
 }

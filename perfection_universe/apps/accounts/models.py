@@ -6,8 +6,12 @@ class UserProfile(models.Model):
     display_name = models.CharField(max_length=80, blank=True)
     bio = models.TextField(blank=True)
     avatar_url = models.URLField(blank=True)
-    # Track which liminal rooms the user has unlocked
     unlocked_rooms = models.JSONField(default=list)
+    mars_stage = models.PositiveIntegerField(default=0)
+    memory_log = models.JSONField(default=list,
+        help_text='Every message the user has ever transmitted to the signal.')
+    lore_flags = models.JSONField(default=dict,
+        help_text='Lore discoveries. e.g. {"identity": true}')
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

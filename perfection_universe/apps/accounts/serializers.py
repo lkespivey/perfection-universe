@@ -5,7 +5,8 @@ from .models import UserProfile
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
-        fields = ['display_name', 'bio', 'avatar_url', 'unlocked_rooms']
+        fields = ['display_name', 'bio', 'avatar_url', 'unlocked_rooms',
+                  'mars_stage', 'memory_log', 'lore_flags']
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8)
