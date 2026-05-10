@@ -5,6 +5,10 @@ export default function Navbar() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+  const isMap = location.pathname === '/map'
+
+  // Hide navbar on map page — it has its own navigation
+  if (isMap) return null
 
   const isActive = (path) => location.pathname.startsWith(path)
 
@@ -33,6 +37,7 @@ export default function Navbar() {
         <Link to="/console" style={linkStyle('/console')}>CONSOLE</Link>
         <Link to="/rooms" style={linkStyle('/rooms')}>ROOMS</Link>
         <Link to="/games" style={linkStyle('/games')}>GAMES</Link>
+        <Link to="/map" style={linkStyle('/map')}>MAP</Link>
 
         {user ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>

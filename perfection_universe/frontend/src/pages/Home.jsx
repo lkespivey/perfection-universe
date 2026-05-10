@@ -12,8 +12,8 @@ function DreamWord({ word, x, delay }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 0 }}
-      animate={{ opacity: [0, 0.18, 0.18, 0], y: -120 }}
-      transition={{ duration: 12, delay, repeat: Infinity, repeatDelay: Math.random() * 20 + 10 }}
+      animate={{ opacity: [0, 0.35, 0.35, 0], y: -180 }}
+      transition={{ duration: 10, delay, repeat: Infinity, repeatDelay: 4 }}
       onHoverStart={() => { setHovered(true); sound.dreamFloat() }}
       onHoverEnd={() => setHovered(false)}
       style={{
@@ -77,17 +77,29 @@ export default function Home() {
     }
   }, [])
 
-  // Idle Mars drift — 60s of no mouse movement
   useEffect(() => {
-    const resetIdle = () => {
-      clearTimeout(idleTimer.current)
-      if (marsGone) setMarsGone(false)
-      idleTimer.current = setTimeout(() => setMarsGone(true), 60000)
-    }
+  let idleTimeout = null
+
+  const resetIdle = () => {
+    clearTimeout(idleTimeout)
+    setMarsGone(false)
+    idleTimeout = setTimeout(() => {
+      setMarsGone(true)
+    }, 5000)
+  }
+
+  // Only activate after user has been on page 5 seconds
+  const startTimer = setTimeout(() => {
     window.addEventListener('mousemove', resetIdle)
     resetIdle()
-    return () => window.removeEventListener('mousemove', resetIdle)
-  }, [marsGone])
+  }, 30000)
+
+  return () => {
+    clearTimeout(startTimer)
+    clearTimeout(idleTimeout)
+    window.removeEventListener('mousemove', resetIdle)
+  }
+}, [])
 
   const [clockTime, setClockTime] = useState(0)
   useEffect(() => {
