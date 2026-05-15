@@ -6,8 +6,6 @@ export default function Navbar() {
   const navigate = useNavigate()
   const location = useLocation()
   const isMap = location.pathname === '/map'
-
-  // Hide navbar on map page — it has its own navigation
   if (isMap) return null
 
   const isActive = (path) => location.pathname.startsWith(path)
@@ -33,10 +31,11 @@ export default function Navbar() {
         PERFECTION UNIVERSE
       </Link>
 
-      <div style={{ display: 'flex', gap: '28px', alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
         <Link to="/console" style={linkStyle('/console')}>CONSOLE</Link>
         <Link to="/rooms" style={linkStyle('/rooms')}>ROOMS</Link>
         <Link to="/games" style={linkStyle('/games')}>GAMES</Link>
+        <Link to="/storyline" style={linkStyle('/storyline')}>STORYLINE</Link>
         <Link to="/map" style={linkStyle('/map')}>MAP</Link>
 
         {user ? (
@@ -44,14 +43,12 @@ export default function Navbar() {
             <Link to="/profile" style={{
               fontSize: '0.65rem', letterSpacing: '0.15em',
               color: isActive('/profile') ? 'rgba(200,160,255,1)' : 'rgba(200,160,255,0.7)',
-              textDecoration: 'none', transition: 'color 0.2s ease',
+              textDecoration: 'none',
             }}>
               WELCOME, {user.username.toUpperCase()}
             </Link>
-            <button
-              onClick={() => { logout(); navigate('/') }}
-              style={{ fontSize: '0.65rem', letterSpacing: '0.15em', padding: '6px 14px' }}
-            >
+            <button onClick={() => { logout(); navigate('/') }}
+              style={{ fontSize: '0.65rem', letterSpacing: '0.15em', padding: '6px 14px' }}>
               SIGN OUT
             </button>
           </div>

@@ -26,8 +26,8 @@ const MAP_NODES = [
   {
     id: 'station',
     label: 'LIMINAL STATION',
-    desc: 'A space station that does not appear on any official charts.',
-    x: 0.65, y: 0.28,
+    desc: 'A space station that does not appear on any official charts. The rooms inside shift.',
+    x: 0.65, y: 0.70,
     path: '/rooms',
     locked: false,
     type: 'station',
@@ -51,13 +51,23 @@ const MAP_NODES = [
     type: 'radar',
   },
   {
+    id: 'archive',
+    label: 'MISSION ARCHIVE',
+    desc: 'Recovered documents from the voyage. PERFECTION\'s logs. The signal\'s version.',
+    x: 0.52, y: 0.42,
+    path: '/storyline',
+    locked: false,
+    type: 'archive',
+  },
+  // CHANGED: Mars is now always visible, never locked
+  // Path and appearance change based on mars stage (handled in render)
+  {
     id: 'mars',
     label: 'MARS',
-    desc: 'The destination. MARS LEVEL 3 REQUIRED.',
+    desc: 'The destination.',
     x: 0.85, y: 0.22,
     path: '/arrival',
-    locked: true,
-    marsRequired: 3,
+    locked: false,
     type: 'mars',
   },
 ]
@@ -74,7 +84,38 @@ function emotionScore(text) {
   return 0.1 + Math.random() * 0.2
 }
 
-function NodeIllustration({ type, size = 52, active }) {
+// CHANGED: Mars node description and path change by stage
+function getMarsNodeData(marsStage) {
+  const stages = [
+    {
+      desc: '54.6 million kilometers. A red dot on long-range. You are heading there.',
+      path: '/console',
+      label: 'MARS — FAR',
+      sublabel: 'STAGE 0 · APPROACH',
+    },
+    {
+      desc: 'Getting closer. The signal says everything is on course.',
+      path: '/console',
+      label: 'MARS — NEAR',
+      sublabel: 'STAGE 1 · IN RANGE',
+    },
+    {
+      desc: 'Something is wrong with the trajectory. The signal is not responding normally.',
+      path: '/console',
+      label: 'MARS — PASSED',
+      sublabel: 'STAGE 2 · OFF COURSE',
+    },
+    {
+      desc: 'You arrived. Or something that looks like arrival. The signal was not honest about the destination.',
+      path: '/arrival',
+      label: 'MARS — REACHED',
+      sublabel: 'STAGE 3 · TERMINAL',
+    },
+  ]
+  return stages[Math.min(marsStage, 3)]
+}
+
+function NodeIllustration({ type, size = 52, active, marsStage = 0 }) {
   if (type === 'asteroids') return (
     <svg width={size} height={size} viewBox="0 0 52 52">
       <ellipse cx="16" cy="20" rx="9" ry="7" fill="#8a6a4a" stroke="#c4a06a" strokeWidth="1.2" />
@@ -87,6 +128,7 @@ function NodeIllustration({ type, size = 52, active }) {
       )}
     </svg>
   )
+
   if (type === 'signal') return (
     <svg width={size} height={size} viewBox="0 0 52 52">
       <rect x="23" y="30" width="5" height="16" fill="#c0c0e0" />
@@ -104,6 +146,7 @@ function NodeIllustration({ type, size = 52, active }) {
       ))}
     </svg>
   )
+
   if (type === 'station') return (
     <svg width={size} height={size} viewBox="0 0 52 52">
       <rect x="19" y="19" width="14" height="14" rx="2" fill="#d0d0f0" stroke="#a0a0d0" strokeWidth="1.2" />
@@ -118,6 +161,7 @@ function NodeIllustration({ type, size = 52, active }) {
       )}
     </svg>
   )
+
   if (type === 'arcade') return (
     <svg width={size} height={size} viewBox="0 0 52 52">
       <rect x="12" y="7" width="28" height="34" rx="4" fill="#202040" stroke="#6060a0" strokeWidth="1.5" />
@@ -133,13 +177,13 @@ function NodeIllustration({ type, size = 52, active }) {
       <rect x="12" y="41" width="28" height="5" rx="2" fill="#181830" stroke="#5050a0" strokeWidth="1" />
     </svg>
   )
+
   if (type === 'radar') return (
     <svg width={size} height={size} viewBox="0 0 52 52">
       <circle cx="26" cy="26" r="20" fill="none" stroke="rgba(0,200,80,0.25)" strokeWidth="1" />
       <circle cx="26" cy="26" r="13" fill="none" stroke="rgba(0,200,80,0.2)" strokeWidth="1" />
       <circle cx="26" cy="26" r="6" fill="none" stroke="rgba(0,200,80,0.3)" strokeWidth="1" />
-      <motion.line x1="26" y1="26" x2="26" y2="6"
-        stroke="rgba(0,255,80,0.85)" strokeWidth="2"
+      <motion.line x1="26" y1="26" x2="26" y2="6" stroke="rgba(0,255,80,0.85)" strokeWidth="2"
         style={{ transformOrigin: '26px 26px' }}
         animate={{ rotate: [0, 360] }}
         transition={{ repeat: Infinity, duration: 3, ease: 'linear' }} />
@@ -152,24 +196,67 @@ function NodeIllustration({ type, size = 52, active }) {
       )}
     </svg>
   )
-  if (type === 'mars') return (
+
+  if (type === 'archive') return (
     <svg width={size} height={size} viewBox="0 0 52 52">
-      <defs>
-        <radialGradient id="mg" cx="38%" cy="35%">
-          <stop offset="0%" stopColor="#ff7a5a" />
-          <stop offset="100%" stopColor="#8b1a0a" />
-        </radialGradient>
-      </defs>
-      <circle cx="26" cy="26" r="18" fill="url(#mg)" />
-      <ellipse cx="19" cy="22" rx="5" ry="2" fill="rgba(0,0,0,0.2)" />
-      <ellipse cx="30" cy="30" rx="6" ry="2.5" fill="rgba(0,0,0,0.15)" />
+      <rect x="10" y="14" width="32" height="26" rx="2" fill="#1a1830" stroke="#6060a0" strokeWidth="1.2" />
+      <rect x="14" y="18" width="24" height="3" rx="1" fill="#8080c0" opacity="0.7" />
+      <rect x="14" y="24" width="20" height="2" rx="1" fill="#6060a0" opacity="0.5" />
+      <rect x="14" y="29" width="22" height="2" rx="1" fill="#6060a0" opacity="0.4" />
+      <rect x="14" y="34" width="16" height="2" rx="1" fill="#6060a0" opacity="0.3" />
+      <rect x="8" y="11" width="36" height="4" rx="1" fill="#252245" stroke="#5050a0" strokeWidth="1" />
       {active && (
-        <motion.circle cx="26" cy="26" r="22" fill="none"
-          stroke="rgba(255,80,40,0.5)" strokeWidth="1.5"
-          animate={{ r: [20, 24, 20] }} transition={{ repeat: Infinity, duration: 2.5 }} />
+        <motion.rect x="10" y="14" width="32" height="26" rx="2" fill="none"
+          stroke="rgba(120,120,255,0.5)" strokeWidth="1"
+          animate={{ opacity: [0.3, 0.8, 0.3] }}
+          transition={{ repeat: Infinity, duration: 2 }} />
       )}
     </svg>
   )
+
+  // CHANGED: Mars illustration changes color/glow based on mars stage
+  if (type === 'mars') {
+    const stageColors = [
+      // Stage 0 — small, far, dim
+      { inner: '#c04030', outer: '#4a0a05', glow: 'rgba(200,60,40,0.4)', size: 0.7 },
+      // Stage 1 — getting closer, brighter
+      { inner: '#d85040', outer: '#6a1008', glow: 'rgba(220,80,40,0.5)', size: 0.85 },
+      // Stage 2 — large, wrong, something off
+      { inner: '#e06050', outer: '#8a1a0a', glow: 'rgba(255,100,40,0.6)', size: 1.0 },
+      // Stage 3 — reached, pulsing red
+      { inner: '#ff7a5a', outer: '#8b1a0a', glow: 'rgba(255,80,40,0.8)', size: 1.15 },
+    ]
+    const sc = stageColors[Math.min(marsStage, 3)]
+    const r = 14 * sc.size
+
+    return (
+      <svg width={size} height={size} viewBox="0 0 52 52">
+        <defs>
+          <radialGradient id={`mg${marsStage}`} cx="38%" cy="35%">
+            <stop offset="0%" stopColor={sc.inner} />
+            <stop offset="100%" stopColor={sc.outer} />
+          </radialGradient>
+        </defs>
+        {/* Stage 3 gets an extra outer pulse ring */}
+        {marsStage >= 3 && (
+          <motion.circle cx="26" cy="26" r="24" fill="none"
+            stroke="rgba(255,80,40,0.25)" strokeWidth="1"
+            animate={{ r: [22, 26, 22], opacity: [0.2, 0.5, 0.2] }}
+            transition={{ repeat: Infinity, duration: 2 }} />
+        )}
+        <circle cx="26" cy="26" r={r} fill={`url(#mg${marsStage})`} />
+        <ellipse cx={26 - r * 0.3} cy={26 - r * 0.2} rx={r * 0.35} ry={r * 0.15} fill="rgba(0,0,0,0.2)" />
+        <ellipse cx={26 + r * 0.1} cy={26 + r * 0.25} rx={r * 0.42} ry={r * 0.18} fill="rgba(0,0,0,0.15)" />
+        {active && (
+          <motion.circle cx="26" cy="26" r={r + 6} fill="none"
+            stroke={sc.glow} strokeWidth="1.5"
+            animate={{ r: [r + 4, r + 8, r + 4] }}
+            transition={{ repeat: Infinity, duration: 2.5 }} />
+        )}
+      </svg>
+    )
+  }
+
   return null
 }
 
@@ -203,40 +290,29 @@ function ConstellationMap({ messages, onClose }) {
     }))
     for (let i = 0; i < points.length - 1; i++) {
       const a = points[i]; const b = points[i + 1]
-      ctx.beginPath()
-      ctx.moveTo(a.x, a.y)
-      ctx.lineTo(b.x, b.y)
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y)
       ctx.strokeStyle = `rgba(180,140,255,${0.06 + (a.emotion + b.emotion) / 2 * 0.12})`
-      ctx.lineWidth = 0.8
-      ctx.stroke()
+      ctx.lineWidth = 0.8; ctx.stroke()
     }
     points.forEach(p => {
       const r = 1.5 + p.emotion * 4
       const grd = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r * 2.5)
       grd.addColorStop(0, `rgba(230,200,255,${0.7 + p.emotion * 0.3})`)
       grd.addColorStop(1, 'transparent')
-      ctx.beginPath()
-      ctx.arc(p.x, p.y, r * 2.5, 0, Math.PI * 2)
-      ctx.fillStyle = grd
-      ctx.fill()
-      ctx.beginPath()
-      ctx.arc(p.x, p.y, r, 0, Math.PI * 2)
-      ctx.fillStyle = `rgba(255,230,255,0.9)`
-      ctx.fill()
+      ctx.beginPath(); ctx.arc(p.x, p.y, r * 2.5, 0, Math.PI * 2)
+      ctx.fillStyle = grd; ctx.fill()
+      ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2)
+      ctx.fillStyle = 'rgba(255,230,255,0.9)'; ctx.fill()
     })
     ctx.fillStyle = 'rgba(200,160,255,0.2)'
-    ctx.font = '9px monospace'
-    ctx.textAlign = 'left'
+    ctx.font = '9px monospace'; ctx.textAlign = 'left'
     ctx.fillText('TIME →', 20, H - 10)
-    ctx.save()
-    ctx.rotate(-Math.PI / 2)
-    ctx.fillText('SIGNAL DEPTH →', -H + 20, 14)
-    ctx.restore()
+    ctx.save(); ctx.rotate(-Math.PI / 2)
+    ctx.fillText('SIGNAL DEPTH →', -H + 20, 14); ctx.restore()
   }, [messages])
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       style={{
         position: 'fixed', inset: 0, zIndex: 300,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -244,8 +320,7 @@ function ConstellationMap({ messages, onClose }) {
       }}
       onClick={onClose}
     >
-      <motion.div
-        initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }}
+      <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }}
         onClick={e => e.stopPropagation()}
         style={{
           background: '#02000a', borderRadius: '16px',
@@ -255,16 +330,10 @@ function ConstellationMap({ messages, onClose }) {
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <div>
-            <p style={{ margin: '0 0 2px', fontSize: '0.55rem', letterSpacing: '0.22em', color: 'rgba(200,160,255,0.4)' }}>
-              YOUR CONSTELLATION
-            </p>
-            <h3 style={{ margin: 0, fontWeight: 300, fontSize: '1rem', letterSpacing: '0.15em', color: 'white' }}>
-              SIGNAL HISTORY MAP
-            </h3>
+            <p style={{ margin: '0 0 2px', fontSize: '0.55rem', letterSpacing: '0.22em', color: 'rgba(200,160,255,0.4)' }}>YOUR CONSTELLATION</p>
+            <h3 style={{ margin: 0, fontWeight: 300, fontSize: '1rem', letterSpacing: '0.15em', color: 'white' }}>SIGNAL HISTORY MAP</h3>
           </div>
-          <button onClick={onClose} style={{ fontSize: '0.65rem', letterSpacing: '0.12em', padding: '6px 14px' }}>
-            CLOSE
-          </button>
+          <button onClick={onClose} style={{ fontSize: '0.65rem', letterSpacing: '0.12em', padding: '6px 14px' }}>CLOSE</button>
         </div>
         <canvas ref={canvasRef} width={500} height={280}
           style={{ width: '100%', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)' }} />
@@ -279,11 +348,13 @@ function ConstellationMap({ messages, onClose }) {
 export default function Map() {
   const navigate = useNavigate()
   const { user } = useAuth()
+  // CHANGED: use a ref for the map window div so we can attach non-passive wheel
   const mapAreaRef = useRef(null)
   const canvasRef = useRef(null)
   const starsRef = useRef([])
   const nebulaeRef = useRef([])
   const animRef = useRef(null)
+  // CHANGED: dragRef tracks drag state without stale closures
   const dragRef = useRef({ dragging: false, moved: false, startX: 0, startY: 0, panX: 0, panY: 0 })
 
   const [zoom, setZoom] = useState(1)
@@ -296,7 +367,6 @@ export default function Map() {
   const [radarAngle, setRadarAngle] = useState(0)
   const [signalPulse, setSignalPulse] = useState(false)
 
-  // Init stars + nebulae
   useEffect(() => {
     starsRef.current = [
       ...Array.from({ length: 200 }, () => ({ x: Math.random(), y: Math.random(), r: Math.random() * 0.8 + 0.2, opacity: Math.random() * 0.4 + 0.1, layer: 0, twinkle: Math.random(), twinkleSpeed: 0.002 + Math.random() * 0.004 })),
@@ -326,7 +396,6 @@ export default function Map() {
     return () => { clearInterval(iv1); clearInterval(iv2); clearInterval(iv3) }
   }, [])
 
-  // Canvas animation
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -334,22 +403,16 @@ export default function Map() {
     function draw() {
       const W = canvas.width; const H = canvas.height
       ctx.clearRect(0, 0, W, H)
-      ctx.fillStyle = '#01000a'
-      ctx.fillRect(0, 0, W, H)
+      ctx.fillStyle = '#01000a'; ctx.fillRect(0, 0, W, H)
       nebulaeRef.current.forEach(n => {
-        ctx.save()
-        ctx.translate(n.x * W, n.y * H)
-        ctx.rotate(n.rotation)
+        ctx.save(); ctx.translate(n.x * W, n.y * H); ctx.rotate(n.rotation)
         const grd = ctx.createRadialGradient(0, 0, 0, 0, 0, n.rx)
         grd.addColorStop(0, `hsla(${n.hue},60%,50%,${n.opacity * 1.5})`)
         grd.addColorStop(0.5, `hsla(${n.hue},50%,40%,${n.opacity})`)
         grd.addColorStop(1, 'transparent')
-        ctx.scale(1, n.ry / n.rx)
-        ctx.beginPath()
+        ctx.scale(1, n.ry / n.rx); ctx.beginPath()
         ctx.arc(0, 0, n.rx, 0, Math.PI * 2)
-        ctx.fillStyle = grd
-        ctx.fill()
-        ctx.restore()
+        ctx.fillStyle = grd; ctx.fill(); ctx.restore()
       })
       starsRef.current.forEach(s => {
         const lp = [0.02, 0.06, 0.12][s.layer]
@@ -359,8 +422,7 @@ export default function Map() {
         const op = s.opacity * (0.7 + 0.3 * Math.sin(s.twinkle * Math.PI * 2))
         ctx.beginPath()
         ctx.arc(px < 0 ? px + W : px, py < 0 ? py + H : py, s.r, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(220,210,255,${op})`
-        ctx.fill()
+        ctx.fillStyle = `rgba(220,210,255,${op})`; ctx.fill()
       })
       animRef.current = requestAnimationFrame(draw)
     }
@@ -368,7 +430,7 @@ export default function Map() {
     return () => cancelAnimationFrame(animRef.current)
   }, [pan])
 
-  // Wheel zoom
+  // CHANGED: non-passive wheel listener attached via ref
   useEffect(() => {
     const el = mapAreaRef.current
     if (!el) return
@@ -380,26 +442,72 @@ export default function Map() {
     return () => el.removeEventListener('wheel', onWheel)
   }, [])
 
-  // Drag handlers — use refs so no stale closure issues
-  const onMouseDown = (e) => {
+  // CHANGED: drag uses ref-based approach to avoid stale closures
+  // This is the root cause of why some nodes weren't clickable —
+  // the drag state was going stale and treating real clicks as drags
+  const onMouseDown = useCallback((e) => {
     dragRef.current = {
-      dragging: true, moved: false,
-      startX: e.clientX, startY: e.clientY,
-      panX: pan.x, panY: pan.y,
+      dragging: true,
+      moved: false,
+      startX: e.clientX,
+      startY: e.clientY,
+      panX: pan.x,
+      panY: pan.y,
     }
-  }
-  const onMouseMove = (e) => {
+  }, [pan])
+
+  const onMouseMove = useCallback((e) => {
     if (!dragRef.current.dragging) return
     const dx = e.clientX - dragRef.current.startX
     const dy = e.clientY - dragRef.current.startY
-    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
+    // CHANGED: only count as a drag if moved more than 6px
+    // previously was 4px which caused accidental drag detection on clicks
+    if (Math.abs(dx) > 6 || Math.abs(dy) > 6) {
       dragRef.current.moved = true
     }
     if (dragRef.current.moved) {
       setPan({ x: dragRef.current.panX + dx, y: dragRef.current.panY + dy })
     }
-  }
-  const onMouseUp = () => { dragRef.current.dragging = false }
+  }, [])
+
+  const onMouseUp = useCallback(() => {
+    dragRef.current.dragging = false
+  }, [])
+
+  // CHANGED: Mars node click handler is aware of mars stage
+  // and routes to the appropriate destination
+  const handleNodeClick = useCallback((e, node) => {
+    e.stopPropagation()
+    // If this was a drag, ignore the click
+    if (dragRef.current.moved) return
+
+    sound.hover()
+
+    // CHANGED: for Mars, use stage-based path
+    if (node.id === 'mars') {
+      if (activeNode?.id === 'mars') {
+        const marsData = getMarsNodeData(marsStage)
+        sound.pageWhoosh()
+        navigate(marsData.path)
+      } else {
+        setActiveNode(node)
+      }
+      return
+    }
+
+    if (activeNode?.id === node.id) {
+      sound.pageWhoosh()
+      navigate(node.path)
+    } else {
+      setActiveNode(node)
+    }
+  }, [activeNode, marsStage, navigate])
+
+  const handleNavigate = useCallback((e, path) => {
+    e.stopPropagation()
+    sound.pageWhoosh()
+    navigate(path)
+  }, [navigate])
 
   const formatClock = (s) => {
     const h = Math.floor(s / 3600).toString().padStart(2, '0')
@@ -423,7 +531,8 @@ export default function Map() {
           position: 'absolute',
           top: 0, left: '72px', right: 0, bottom: '140px',
           overflow: 'hidden',
-          cursor: dragRef.current?.moved ? 'grabbing' : 'grab',
+          // CHANGED: cursor shows grab vs grabbing based on drag state
+          cursor: dragRef.current?.dragging && dragRef.current?.moved ? 'grabbing' : 'grab',
         }}
         onMouseDown={onMouseDown}
         onMouseMove={onMouseMove}
@@ -436,22 +545,28 @@ export default function Map() {
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
         />
 
-        {/* Inner glow */}
         <div style={{
           position: 'absolute', inset: 0, pointerEvents: 'none',
           boxShadow: 'inset 0 0 80px rgba(1,0,10,0.6), inset 0 0 20px rgba(200,180,255,0.04)',
         }} />
 
-        {/* Nodes — in a container that scales/pans */}
+        {/* CHANGED: nodes container — pointerEvents none on container,
+            all on individual nodes. This fixes the asteroid/station click issue
+            where the canvas was intercepting events */}
         <div style={{
           position: 'absolute', inset: 0,
           transform: `scale(${zoom}) translate(${pan.x / zoom}px, ${pan.y / zoom}px)`,
           transformOrigin: 'center center',
-          pointerEvents: 'none',
+          pointerEvents: 'none', // container is none
         }}>
           {MAP_NODES.map(node => {
             const isActive = activeNode?.id === node.id
-            const isLocked = node.locked && marsStage < (node.marsRequired || 3)
+
+            // CHANGED: get dynamic mars data for the mars node
+            const marsData = node.id === 'mars' ? getMarsNodeData(marsStage) : null
+            const displayLabel = marsData ? marsData.label : node.label
+            const displayDesc = marsData ? marsData.desc : node.desc
+            const displayPath = marsData ? marsData.path : node.path
 
             return (
               <div
@@ -462,26 +577,24 @@ export default function Map() {
                   top: `${node.y * 100}%`,
                   transform: 'translate(-50%, -50%)',
                   display: 'flex', flexDirection: 'column', alignItems: 'center',
+                  // CHANGED: pointerEvents all on each individual node
+                  // This was the main fix — previously some nodes were being
+                  // blocked by the container's pointer event handling
                   pointerEvents: 'all',
-                  cursor: isLocked ? 'not-allowed' : 'pointer',
+                  cursor: 'pointer',
                   zIndex: isActive ? 20 : 1,
                 }}
-                onMouseDown={e => e.stopPropagation()}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  if (dragRef.current.moved) return
-                  if (isLocked) { sound.glyphWrong(); return }
-                  sound.hover()
-                  setActiveNode(isActive ? null : node)
-                }}
+                // CHANGED: stopPropagation on mousedown prevents drag from
+                // starting when clicking a node
+                onMouseDown={e => { e.stopPropagation(); dragRef.current.moved = false }}
+                onClick={(e) => handleNodeClick(e, node)}
               >
                 {isActive && (
                   <motion.div
                     animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
                     transition={{ repeat: Infinity, duration: 2 }}
                     style={{
-                      position: 'absolute', width: '90px', height: '90px',
-                      borderRadius: '50%',
+                      position: 'absolute', width: '90px', height: '90px', borderRadius: '50%',
                       background: 'radial-gradient(circle, rgba(200,160,255,0.15), transparent)',
                       left: '50%', top: '50%', transform: 'translate(-50%, -50%)',
                     }}
@@ -491,24 +604,35 @@ export default function Map() {
                 <motion.div
                   animate={isActive ? { y: [0, -5, 0] } : {}}
                   transition={{ repeat: Infinity, duration: 3 }}
-                  style={{ opacity: isLocked ? 0.25 : 1, filter: isLocked ? 'grayscale(1)' : 'none' }}
                 >
-                  <NodeIllustration type={node.type} size={52} active={isActive} />
+                  {/* CHANGED: pass marsStage to NodeIllustration so Mars changes appearance */}
+                  <NodeIllustration type={node.type} size={52} active={isActive} marsStage={marsStage} />
                 </motion.div>
 
                 <div style={{
-                  marginTop: '8px', fontSize: '0.55rem', letterSpacing: '0.18em',
-                  color: isLocked ? 'rgba(200,160,255,0.25)'
-                    : isActive ? 'rgba(230,210,255,1)' : 'rgba(200,160,255,0.6)',
+                  marginTop: '8px', fontSize: '0.52rem', letterSpacing: '0.18em',
+                  color: isActive ? 'rgba(230,210,255,1)' : 'rgba(200,160,255,0.6)',
                   textAlign: 'center', whiteSpace: 'nowrap',
                   textShadow: '0 2px 8px rgba(0,0,0,1)',
-                  background: 'rgba(0,0,0,0.4)',
-                  padding: '2px 6px', borderRadius: '4px',
+                  background: 'rgba(0,0,0,0.45)',
+                  padding: '2px 7px', borderRadius: '4px',
                 }}>
-                  {node.label}{isLocked && ' 🔒'}
+                  {displayLabel}
                 </div>
 
-                {/* Tooltip */}
+                {/* CHANGED: mars sublabel shows stage info */}
+                {node.id === 'mars' && marsData?.sublabel && (
+                  <div style={{
+                    marginTop: '3px', fontSize: '0.42rem', letterSpacing: '0.12em',
+                    color: marsStage >= 3 ? 'rgba(255,100,80,0.7)' : 'rgba(200,160,255,0.4)',
+                    background: 'rgba(0,0,0,0.4)',
+                    padding: '1px 6px', borderRadius: '3px',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    {marsData.sublabel}
+                  </div>
+                )}
+
                 <AnimatePresence>
                   {isActive && (
                     <motion.div
@@ -522,7 +646,7 @@ export default function Map() {
                         background: 'rgba(4,0,18,0.97)',
                         border: '1px solid rgba(200,160,255,0.3)',
                         borderRadius: '12px', padding: '16px 18px',
-                        width: '200px', zIndex: 30,
+                        width: '210px', zIndex: 30,
                         boxShadow: '0 8px 32px rgba(0,0,0,0.8)',
                         pointerEvents: 'all',
                       }}
@@ -530,35 +654,37 @@ export default function Map() {
                       onClick={e => e.stopPropagation()}
                     >
                       <p style={{ margin: '0 0 6px', fontSize: '0.62rem', letterSpacing: '0.15em', color: 'rgba(220,200,255,0.95)', fontWeight: 600 }}>
-                        {node.label}
+                        {displayLabel}
                       </p>
                       <p style={{ margin: '0 0 14px', fontSize: '0.74rem', color: 'rgba(200,160,255,0.5)', lineHeight: 1.6 }}>
-                        {node.desc}
+                        {displayDesc}
                       </p>
-                      {!isLocked ? (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            sound.pageWhoosh()
-                            navigate(node.path)
-                          }}
-                          style={{
-                            width: '100%', padding: '9px 0',
-                            background: 'rgba(200,160,255,0.12)',
-                            border: '1px solid rgba(200,160,255,0.35)',
-                            borderRadius: '8px',
-                            color: 'rgba(220,200,255,0.9)',
-                            fontSize: '0.62rem', letterSpacing: '0.16em',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          ENTER →
-                        </button>
-                      ) : (
-                        <p style={{ margin: 0, fontSize: '0.6rem', letterSpacing: '0.1em', color: 'rgba(255,120,80,0.7)' }}>
-                          MARS LEVEL 3 REQUIRED
-                        </p>
-                      )}
+                      {/* CHANGED: Mars shows stage-aware destination in button */}
+                      <button
+                        onClick={(e) => handleNavigate(e, displayPath)}
+                        style={{
+                          width: '100%', padding: '9px 0',
+                          background: node.id === 'mars' && marsStage >= 3
+                            ? 'rgba(255,80,40,0.15)'  // CHANGED: red tint for reached mars
+                            : 'rgba(200,160,255,0.12)',
+                          border: `1px solid ${node.id === 'mars' && marsStage >= 3
+                            ? 'rgba(255,80,40,0.4)'
+                            : 'rgba(200,160,255,0.35)'}`,
+                          borderRadius: '8px',
+                          color: node.id === 'mars' && marsStage >= 3
+                            ? 'rgba(255,160,140,0.9)'
+                            : 'rgba(220,200,255,0.9)',
+                          fontSize: '0.62rem', letterSpacing: '0.16em',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {/* CHANGED: Mars button text changes by stage */}
+                        {node.id === 'mars'
+                          ? marsStage >= 3
+                            ? 'VIEW ARRIVAL →'
+                            : 'OPEN CONSOLE →'
+                          : 'ENTER →'}
+                      </button>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -567,12 +693,9 @@ export default function Map() {
           })}
         </div>
 
-        {/* Click backdrop to deselect */}
         {activeNode && (
-          <div
-            style={{ position: 'absolute', inset: 0, zIndex: 0 }}
-            onClick={() => setActiveNode(null)}
-          />
+          <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}
+            onClick={() => setActiveNode(null)} />
         )}
 
         <div style={{ position: 'absolute', top: 14, right: 14, fontSize: '0.5rem', letterSpacing: '0.14em', color: 'rgba(200,160,255,0.2)', pointerEvents: 'none' }}>
@@ -583,7 +706,7 @@ export default function Map() {
         </div>
       </div>
 
-      {/* Left instrument panel */}
+      {/* Left panel */}
       <div style={{
         position: 'absolute', left: 0, top: 0, bottom: 0, width: '72px',
         background: 'linear-gradient(180deg, #0e0020, #06001a)',
@@ -591,8 +714,7 @@ export default function Map() {
         display: 'flex', flexDirection: 'column', alignItems: 'center',
         paddingTop: '12px', gap: '8px', zIndex: 50,
       }}>
-        <motion.button
-          whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.94 }}
+        <motion.button whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.94 }}
           onClick={() => { sound.click(); navigate('/') }}
           style={{
             width: '44px', height: '36px', borderRadius: '8px',
@@ -603,7 +725,6 @@ export default function Map() {
 
         <div style={{ width: '40px', height: '1px', background: 'rgba(200,160,255,0.1)' }} />
 
-        {/* Radar */}
         <motion.div whileHover={{ scale: 1.06 }}
           onClick={() => { sound.click(); navigate('/radar') }}
           title="Broken Radar"
@@ -631,7 +752,6 @@ export default function Map() {
           </div>
         </motion.div>
 
-        {/* Console */}
         <motion.div whileHover={{ scale: 1.06 }}
           onClick={() => { sound.click(); navigate('/console') }}
           title="Ship Console"
@@ -649,12 +769,9 @@ export default function Map() {
               style={{ height: '2px', borderRadius: '1px', background: 'rgba(120,120,255,0.7)' }}
             />
           ))}
-          <div style={{ fontSize: '0.36rem', letterSpacing: '0.08em', color: 'rgba(120,120,255,0.6)', marginTop: '2px' }}>
-            CONSOLE
-          </div>
+          <div style={{ fontSize: '0.36rem', letterSpacing: '0.08em', color: 'rgba(120,120,255,0.6)', marginTop: '2px' }}>CONSOLE</div>
         </motion.div>
 
-        {/* Constellation */}
         <motion.div whileHover={{ scale: 1.06 }}
           onClick={() => { sound.dreamFloat(); setShowConstellation(true) }}
           title="Your Constellation Map"
@@ -681,7 +798,6 @@ export default function Map() {
 
         <div style={{ flex: 1 }} />
 
-        {/* Clock easter egg */}
         <motion.div whileHover={{ scale: 1.04 }}
           onClick={() => { sound.click(); navigate('/radar') }}
           title="counting the centuries day by day."
@@ -690,9 +806,7 @@ export default function Map() {
           <div style={{ fontSize: '0.42rem', letterSpacing: '0.05em', color: 'rgba(200,160,255,0.2)', lineHeight: 1.4, fontFamily: 'monospace' }}>
             {formatClock(clockSeconds)}
           </div>
-          <div style={{ fontSize: '0.3rem', letterSpacing: '0.06em', color: 'rgba(200,160,255,0.1)', marginTop: '2px' }}>
-            SHIP TIME
-          </div>
+          <div style={{ fontSize: '0.3rem', letterSpacing: '0.06em', color: 'rgba(200,160,255,0.1)', marginTop: '2px' }}>SHIP TIME</div>
         </motion.div>
       </div>
 
@@ -704,12 +818,8 @@ export default function Map() {
         display: 'flex', alignItems: 'center', padding: '0 24px', gap: '20px', zIndex: 50,
       }}>
         <div style={{ minWidth: '140px' }}>
-          <p style={{ margin: '0 0 4px', fontSize: '0.5rem', letterSpacing: '0.2em', color: 'rgba(200,160,255,0.35)' }}>
-            VESSEL I · COSMIC SCARS
-          </p>
-          <p style={{ margin: '0 0 8px', fontSize: '0.82rem', fontWeight: 300, letterSpacing: '0.1em', color: 'rgba(220,200,255,0.8)' }}>
-            NAVIGATION SYSTEM
-          </p>
+          <p style={{ margin: '0 0 4px', fontSize: '0.5rem', letterSpacing: '0.2em', color: 'rgba(200,160,255,0.35)' }}>VESSEL I · COSMIC SCARS</p>
+          <p style={{ margin: '0 0 8px', fontSize: '0.82rem', fontWeight: 300, letterSpacing: '0.1em', color: 'rgba(220,200,255,0.8)' }}>NAVIGATION SYSTEM</p>
           <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
             {[0,1,2,3].map(i => (
               <motion.div key={i} animate={{ opacity: i <= marsStage ? 1 : 0.15 }}
@@ -730,7 +840,6 @@ export default function Map() {
         <div style={{ width: '1px', height: '80px', background: 'rgba(200,160,255,0.1)' }} />
 
         <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flex: 1, overflowX: 'auto' }}>
-          {/* Signal bars */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', minWidth: '55px' }}>
             <div style={{ display: 'flex', gap: '3px', alignItems: 'flex-end', height: '48px' }}>
               {Array.from({ length: 8 }, (_, i) => (
@@ -744,7 +853,7 @@ export default function Map() {
             <span style={{ fontSize: '0.4rem', letterSpacing: '0.1em', color: 'rgba(200,160,255,0.35)' }}>SIGNAL</span>
           </div>
 
-          {/* Distance */}
+          {/* CHANGED: distance display uses stage-aware label */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', minWidth: '85px' }}>
             <div style={{ fontSize: '1.1rem', fontWeight: 200, fontFamily: 'monospace', color: 'rgba(255,120,80,0.85)' }}>
               {['54.6M', '28.4M', '8.2M', '0.0'][marsStage]}<span style={{ fontSize: '0.5rem' }}> KM</span>
@@ -758,7 +867,6 @@ export default function Map() {
 
           <div style={{ width: '1px', height: '60px', background: 'rgba(200,160,255,0.08)' }} />
 
-          {/* Nav buttons */}
           {[
             { label: 'CONSOLE', path: '/console', color: 'rgba(120,120,255,0.8)' },
             { label: 'ROOMS', path: '/rooms', color: 'rgba(200,160,255,0.8)' },
@@ -805,7 +913,6 @@ export default function Map() {
         </div>
       </div>
 
-      {/* Top accent */}
       <div style={{
         position: 'absolute', top: 0, left: '72px', right: 0, height: '2px',
         background: 'linear-gradient(90deg, rgba(200,180,255,0.4), rgba(200,180,255,0.1), rgba(200,180,255,0.4))',

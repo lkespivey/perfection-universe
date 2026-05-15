@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     'apps.rooms',
     'apps.games',
     'apps.map',
+    'apps.storyline',
 ]
 
 MIDDLEWARE = [

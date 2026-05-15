@@ -210,7 +210,7 @@ export default function Home() {
         }}>
           {[
             { title: 'COSMIC SCARS', desc: 'A liminal spacecraft drifting back to Mars', path: '/console' },
-            { title: 'THE STORYLINE', desc: 'Fragments of memory and signal logs', path: null },
+            { title: 'THE STORYLINE', desc: 'Fragments of memory and signal logs', path: '/storyline' },
             { title: 'THE LIMINAL ROOMS', desc: 'Interactive dream environments', path: '/rooms' },
             { title: 'SIMULATIONS', desc: 'Games born from the signal. Survive them.', path: '/games' },
           ].map((item, i) => (

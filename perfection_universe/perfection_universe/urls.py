@@ -16,4 +16,5 @@ urlpatterns = [
     path('api/rooms/', include('apps.rooms.urls')),
     path('api/games/', include('apps.games.urls')),
     path('api/map/', include('apps.map.urls')),
+    path('api/storyline/', include('apps.storyline.urls')),
 ]

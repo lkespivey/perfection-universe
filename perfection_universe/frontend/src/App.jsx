@@ -15,6 +15,7 @@ import MarsPage from './pages/MarsPage'
 import RadarPage from './pages/RadarPage'
 import Map from './pages/Map'
 import EchoRoom from './pages/EchoRoom'
+import Storyline from './pages/Storyline'
 
 export default function App() {
   const location = useLocation()
@@ -40,6 +41,7 @@ export default function App() {
           <Route path="/mars" element={<MarsPage />} />
           <Route path="/radar" element={<RadarPage />} />
           <Route path="/map" element={<Map />} />
+          <Route path="/storyline" element={<Storyline />} />
         </Routes>
       </div>
     </>
