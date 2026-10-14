@@ -16,6 +16,10 @@ import RadarPage from './pages/RadarPage'
 import Map from './pages/Map'
 import EchoRoom from './pages/EchoRoom'
 import Storyline from './pages/Storyline'
+import FAQ from './pages/FAQ'
+import BugReport from './pages/BugReport'
+import Music from './pages/Music'
+
 
 export default function App() {
   const location = useLocation()
@@ -42,6 +46,10 @@ export default function App() {
           <Route path="/radar" element={<RadarPage />} />
           <Route path="/map" element={<Map />} />
           <Route path="/storyline" element={<Storyline />} />
+          <Route path="/faq" element={<FAQ />} />
+          <Route path="/bugs" element={<BugReport />} />
+          <Route path="/music" element={<Music />} />
+
         </Routes>
       </div>
     </>

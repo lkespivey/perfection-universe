@@ -120,12 +120,57 @@ export default function Console() {
   const [unlockedRoom, setUnlockedRoom] = useState(null)
   const [marsStage, setMarsStage] = useState(0)
   const [signalActive, setSignalActive] = useState(false)
-  const [glidingText, setGlidingText] = useState(false)
   const [idleMessage, setIdleMessage] = useState(false)
   const chatEndRef = useRef(null)
   const idleTimerRef = useRef(null)
   const navigate = useNavigate()
   const { user } = useAuth()
+
+  // ── AUDIO: ref for the console ambient track ──────────
+  const audioRef = useRef(null)
+  // ── AUDIO: track whether we've already started playing
+  const audioStarted = useRef(false)
+
+  // ── AUDIO: attempt autoplay, fall back to first click ─
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio) return
+
+    audio.volume = 0.50
+    audio.loop = true
+
+    // Try immediate autoplay
+    const tryPlay = () => {
+      if (audioStarted.current) return
+      audio.play().then(() => {
+        audioStarted.current = true
+        // Remove the fallback listeners once playing
+        window.removeEventListener('click', tryPlay)
+        window.removeEventListener('keydown', tryPlay)
+        window.removeEventListener('touchstart', tryPlay)
+      }).catch(() => {
+        // Autoplay blocked — wait for interaction
+      })
+    }
+
+    // Attach fallback listeners for first interaction
+    window.addEventListener('click', tryPlay)
+    window.addEventListener('keydown', tryPlay)
+    window.addEventListener('touchstart', tryPlay)
+
+    // Try immediately too
+    tryPlay()
+
+    // ── AUDIO: stop and clean up when leaving the page ─
+    return () => {
+      audio.pause()
+      audio.currentTime = 0
+      audioStarted.current = false
+      window.removeEventListener('click', tryPlay)
+      window.removeEventListener('keydown', tryPlay)
+      window.removeEventListener('touchstart', tryPlay)
+    }
+  }, [])
 
   useEffect(() => {
     client.get('/console/signals/')
@@ -137,7 +182,6 @@ export default function Console() {
     }
     const iv = setInterval(() => setSignalActive(prev => !prev), 15000)
 
-    // 3 minute idle message
     idleTimerRef.current = setTimeout(() => {
       setIdleMessage(true)
       setTimeout(() => setIdleMessage(false), 10000)
@@ -149,7 +193,6 @@ export default function Console() {
     }
   }, [user])
 
-  // Reset idle timer on any interaction
   useEffect(() => {
     const reset = () => {
       clearTimeout(idleTimerRef.current)
@@ -189,15 +232,15 @@ export default function Console() {
     setChatMessages(prev => [...prev, userMsg])
     const sentText = input
 
-    // Easter egg — "cosmic scars" typed
     if (sentText.toLowerCase().includes('cosmic scars')) {
       sound.cosmicScars()
     }
 
-    // Easter egg — glitchy text at Mars Stage 2
     if (marsStage >= 2) {
       const glitched = sentText.split('').map(c =>
-        Math.random() < 0.15 ? String.fromCharCode(c.charCodeAt(0) + Math.floor(Math.random() * 3 - 1)) : c
+        Math.random() < 0.15
+          ? String.fromCharCode(c.charCodeAt(0) + Math.floor(Math.random() * 3 - 1))
+          : c
       ).join('')
       if (glitched !== sentText) {
         setChatMessages(prev => prev.map(m =>
@@ -239,9 +282,6 @@ export default function Console() {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage() }
   }
 
-  // "id still be on mars" — profile stat hint
-  const noVoiceHint = marsStage >= 2
-
   return (
     <div style={{
       minHeight: '100vh', color: 'white',
@@ -251,6 +291,15 @@ export default function Console() {
       paddingBottom: '80px',
       transition: 'background 2s ease',
     }}>
+
+      {/* ── AUDIO: the actual audio element ──────────────
+          File lives at: frontend/public/audio/console.m4a
+          Controlled entirely by the useEffect above      */}
+      <audio
+        ref={audioRef}
+        src="/audio/console.m4a"
+        preload="auto"
+      />
 
       {/* Header */}
       <div style={{
@@ -282,11 +331,15 @@ export default function Console() {
             <motion.div
               animate={{ opacity: signalActive ? [0.4, 1, 0.4] : 0.2 }}
               transition={{ repeat: Infinity, duration: 2 }}
-              style={{ width: '7px', height: '7px', borderRadius: '50%', background: signalActive ? 'rgba(100,255,180,0.9)' : 'rgba(255,255,255,0.3)' }}
+              style={{
+                width: '7px', height: '7px', borderRadius: '50%',
+                background: signalActive ? 'rgba(100,255,180,0.9)' : 'rgba(255,255,255,0.3)',
+              }}
             />
             {consoleOpen ? 'CONSOLE OPEN' : 'OPEN SIGNAL'}
           </motion.button>
-          <button onClick={() => { sound.click(); navigate('/') }} style={{ fontSize: '0.7rem', letterSpacing: '0.15em', padding: '8px 18px' }}>
+          <button onClick={() => { sound.click(); navigate('/') }}
+            style={{ fontSize: '0.7rem', letterSpacing: '0.15em', padding: '8px 18px' }}>
             ← BACK
           </button>
         </div>
@@ -303,17 +356,20 @@ export default function Console() {
         <span>SIGNAL: {marsStage >= 2 ? 'BROKEN RADARS' : signals.length > 0 ? 'RECEIVING' : 'SCANNING'}</span>
         <span>LOGS: {signals.length}</span>
         {user && <span>OPERATOR: {user.username.toUpperCase()}</span>}
-        {noVoiceHint && <span style={{ color: 'rgba(255,180,80,0.5)' }}>I CANT HEAR YOU OVER ALL THIS NOISE</span>}
+        {marsStage >= 2 && (
+          <span style={{ color: 'rgba(255,180,80,0.5)' }}>I CANT HEAR YOU OVER ALL THIS NOISE</span>
+        )}
       </div>
 
-      {/* Idle message easter egg */}
+      {/* Idle message */}
       <AnimatePresence>
         {idleMessage && (
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             transition={{ duration: 2 }}
             style={{
-              position: 'fixed', bottom: '80px', left: '50%', transform: 'translateX(-50%)',
+              position: 'fixed', bottom: '80px', left: '50%',
+              transform: 'translateX(-50%)',
               fontSize: '0.75rem', letterSpacing: '0.15em', fontFamily: 'monospace',
               color: 'rgba(200,160,255,0.4)', pointerEvents: 'none', zIndex: 50,
               textAlign: 'center',
@@ -332,13 +388,15 @@ export default function Console() {
             style={{
               margin: '20px 40px 0', padding: '16px 24px', borderRadius: '12px',
               background: 'rgba(255,40,80,0.12)', border: '1px solid rgba(255,40,80,0.3)',
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              flexWrap: 'wrap', gap: '12px',
             }}
           >
             <p style={{ margin: 0, fontSize: '0.8rem', letterSpacing: '0.12em', color: 'rgba(255,120,140,0.9)' }}>
               ⬡ NEW ROOM UNLOCKED
             </p>
-            <button onClick={() => { sound.click(); navigate('/rooms') }} style={{ fontSize: '0.68rem', letterSpacing: '0.12em', padding: '6px 14px' }}>
+            <button onClick={() => { sound.click(); navigate('/rooms') }}
+              style={{ fontSize: '0.68rem', letterSpacing: '0.12em', padding: '6px 14px' }}>
               ENTER THE ROOMS →
             </button>
           </motion.div>
@@ -349,14 +407,16 @@ export default function Console() {
       <AnimatePresence>
         {consoleOpen && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }} style={{ overflow: 'hidden' }}
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            style={{ overflow: 'hidden' }}
           >
             <div style={{
               margin: '24px 40px', borderRadius: '16px',
               border: `1px solid ${marsStage >= 3 ? 'rgba(255,60,60,0.3)' : 'rgba(200,160,255,0.15)'}`,
-              background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(10px)', overflow: 'hidden',
-              transition: 'border-color 1s ease',
+              background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(10px)',
+              overflow: 'hidden', transition: 'border-color 1s ease',
             }}>
               <div style={{
                 padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)',
@@ -379,7 +439,8 @@ export default function Console() {
                       : 'SIGNAL OPEN · SPEAK FREELY'}
                   </span>
                 </div>
-                <button onClick={() => setConsoleOpen(false)} style={{ fontSize: '0.6rem', padding: '4px 10px', letterSpacing: '0.1em' }}>
+                <button onClick={() => setConsoleOpen(false)}
+                  style={{ fontSize: '0.6rem', padding: '4px 10px', letterSpacing: '0.1em' }}>
                   CLOSE
                 </button>
               </div>
@@ -450,7 +511,8 @@ export default function Console() {
           )}
           {signals.map((s, i) => (
             <motion.div key={s.id}
-              initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.08 }}
+              initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.08 }}
               whileHover={{ x: 4 }}
               onClick={() => { sound.click(); setSelected(selected?.id === s.id ? null : s) }}
               style={{
@@ -482,17 +544,21 @@ export default function Console() {
               style={{
                 padding: '28px 32px', marginLeft: '20px', borderRadius: '16px',
                 border: `1px solid ${TYPE_BORDERS[selected.signal_type]}`,
-                background: 'rgba(255,255,255,0.04)', alignSelf: 'flex-start', position: 'sticky', top: '20px',
+                background: 'rgba(255,255,255,0.04)', alignSelf: 'flex-start',
+                position: 'sticky', top: '20px',
               }}
             >
               <p style={{ margin: '0 0 8px', fontSize: '0.6rem', letterSpacing: '0.25em', color: TYPE_COLORS[selected.signal_type] }}>
                 [{selected.signal_type.toUpperCase()}]{selected.stardate ? ` · ${selected.stardate}` : ''}
               </p>
-              <h2 style={{ margin: '0 0 20px', fontWeight: 300, fontSize: '1.4rem', letterSpacing: '0.08em' }}>{selected.title}</h2>
+              <h2 style={{ margin: '0 0 20px', fontWeight: 300, fontSize: '1.4rem', letterSpacing: '0.08em' }}>
+                {selected.title}
+              </h2>
               <p style={{ margin: 0, lineHeight: 1.9, fontSize: '0.95rem', color: 'rgba(220,200,255,0.85)', whiteSpace: 'pre-wrap' }}>
                 {selected.content}
               </p>
-              <button onClick={() => setSelected(null)} style={{ marginTop: '28px', fontSize: '0.7rem', letterSpacing: '0.15em', padding: '8px 18px' }}>
+              <button onClick={() => setSelected(null)}
+                style={{ marginTop: '28px', fontSize: '0.7rem', letterSpacing: '0.15em', padding: '8px 18px' }}>
                 CLOSE
               </button>
             </motion.div>
@@ -517,7 +583,10 @@ export default function Console() {
           <motion.div
             animate={{ opacity: signalActive ? [0.4, 1, 0.4] : 0.2 }}
             transition={{ repeat: Infinity, duration: 2 }}
-            style={{ width: '6px', height: '6px', borderRadius: '50%', background: signalActive ? 'rgba(100,255,180,0.9)' : 'rgba(255,255,255,0.3)' }}
+            style={{
+              width: '6px', height: '6px', borderRadius: '50%',
+              background: signalActive ? 'rgba(100,255,180,0.9)' : 'rgba(255,255,255,0.3)',
+            }}
           />
           {signalActive ? 'SIGNAL ACTIVE · CLICK TO TRANSMIT' : 'SIGNAL DORMANT · SEARCHING FOR CONNECTION'}
         </div>

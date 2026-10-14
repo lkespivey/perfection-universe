@@ -37,7 +37,8 @@ export default function Navbar() {
         <Link to="/games" style={linkStyle('/games')}>GAMES</Link>
         <Link to="/storyline" style={linkStyle('/storyline')}>STORYLINE</Link>
         <Link to="/map" style={linkStyle('/map')}>MAP</Link>
-
+        <Link to="/music" style={linkStyle('/music')}>MUSIC</Link>
+        <Link to="/faq" style={{ ...linkStyle('/faq'), fontSize: '0.55rem', opacity: 0.6 }}>FAQ</Link>
         {user ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <Link to="/profile" style={{

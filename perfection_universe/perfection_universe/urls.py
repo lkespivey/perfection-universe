@@ -17,4 +17,6 @@ urlpatterns = [
     path('api/games/', include('apps.games.urls')),
     path('api/map/', include('apps.map.urls')),
     path('api/storyline/', include('apps.storyline.urls')),
+    path('api/bugs/', include('apps.bugs.urls')),
+
 ]

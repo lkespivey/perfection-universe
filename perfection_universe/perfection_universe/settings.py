@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     'apps.games',
     'apps.map',
     'apps.storyline',
+    'apps.bugs',
 ]
 
 MIDDLEWARE = [
@@ -106,3 +107,15 @@ SIMPLE_JWT = {
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',
 ]
+
+# ── Email settings ────────────────────────────────────────
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+# ── CUSTOMIZE: put your Gmail address here ───────────────
+EMAIL_HOST_USER = 'your.email@gmail.com'
+# ── CUSTOMIZE: paste your 16-char App Password here ──────
+EMAIL_HOST_PASSWORD = 'fwyi xjtc kpqz eazh'
+# ── CUSTOMIZE: this is who bug reports get sent TO ───────
+BUG_REPORT_EMAIL = 'perfection.thesignal@gmail.com'
